@@ -466,11 +466,16 @@ class CoxNetSurvivalModel:
         self.random_state = random_state
         self.model = None
         self.scaler = StandardScaler()
+        self.imputer = SimpleImputer(strategy='median')
         
     def fit(self, X: pd.DataFrame, y: np.ndarray):
         """Fit heavily regularized CoxNet."""
+        # Handle NaN values
+        X_array = X.values if isinstance(X, pd.DataFrame) else X
+        X_imputed = self.imputer.fit_transform(X_array)
+        
         # Scale features (required for regularized Cox)
-        X_scaled = self.scaler.fit_transform(X)
+        X_scaled = self.scaler.fit_transform(X_imputed)
         
         # Heavily regularized CoxNet
         self.model = CoxnetSurvivalAnalysis(
@@ -491,7 +496,9 @@ class CoxNetSurvivalModel:
     
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Predict risk scores."""
-        X_scaled = self.scaler.transform(X)
+        X_array = X.values if isinstance(X, pd.DataFrame) else X
+        X_imputed = self.imputer.transform(X_array)
+        X_scaled = self.scaler.transform(X_imputed)
         return self.model.predict(X_scaled)
 
 

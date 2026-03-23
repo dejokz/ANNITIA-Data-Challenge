@@ -1,0 +1,908 @@
+2026-03-23 12:13:52,045 - INFO - ================================================================================
+2026-03-23 12:13:52,045 - INFO - ANNITIA MASLD SURVIVAL ANALYSIS - GEMINI RECOMMENDATIONS
+2026-03-23 12:13:52,045 - INFO - Repeated CV | XGBoost | CoxNet | Rank Ensemble | Death-as-Feature
+2026-03-23 12:13:52,045 - INFO - ================================================================================
+2026-03-23 12:13:52,045 - INFO - 
+Loading data...
+2026-03-23 12:13:52,079 - INFO - Train shape: (1253, 287)
+2026-03-23 12:13:52,079 - INFO - Test shape: (423, 284)
+2026-03-23 12:13:52,079 - INFO - 
+================================================================================
+2026-03-23 12:13:52,079 - INFO - PHASE 1: ADVANCED FEATURE ENGINEERING (V2)
+2026-03-23 12:13:52,079 - INFO - ================================================================================
+2026-03-23 12:13:52,084 - INFO - Calculating clinical scores (FIB-4, APRI) for each visit...
+2026-03-23 12:13:52,119 - INFO -   Clinical scores calculated. New variables: fib4, apri, ast
+2026-03-23 12:13:52,119 - INFO - Extracting trajectory features (including EWMA and last measurement)...
+Processing variables:   0%|          | 0/15 [00:00<?, ?it/s]Processing variables:   7%|▋         | 1/15 [00:01<00:16,  1.17s/it]Processing variables:  13%|█▎        | 2/15 [00:02<00:13,  1.02s/it]Processing variables:  20%|██        | 3/15 [00:02<00:11,  1.06it/s]Processing variables:  27%|██▋       | 4/15 [00:04<00:10,  1.01it/s]Processing variables:  33%|███▎      | 5/15 [00:05<00:10,  1.01s/it]Processing variables:  40%|████      | 6/15 [00:05<00:08,  1.04it/s]Processing variables:  47%|████▋     | 7/15 [00:06<00:07,  1.05it/s]Processing variables:  53%|█████▎    | 8/15 [00:07<00:06,  1.03it/s]Processing variables:  60%|██████    | 9/15 [00:08<00:05,  1.01it/s]Processing variables:  67%|██████▋   | 10/15 [00:09<00:04,  1.02it/s]Processing variables:  73%|███████▎  | 11/15 [00:10<00:03,  1.00it/s]Processing variables:  80%|████████  | 12/15 [00:11<00:03,  1.00s/it]Processing variables:  87%|████████▋ | 13/15 [00:12<00:01,  1.04it/s]Processing variables:  93%|█████████▎| 14/15 [00:13<00:00,  1.07it/s]Processing variables: 100%|██████████| 15/15 [00:14<00:00,  1.03it/s]Processing variables: 100%|██████████| 15/15 [00:14<00:00,  1.02it/s]
+2026-03-23 12:14:06,823 - INFO - Extracting cross-NIT concordance features...
+2026-03-23 12:14:06,832 - INFO - Feature engineering complete. Total features: 243
+2026-03-23 12:14:06,835 - INFO - Calculating clinical scores (FIB-4, APRI) for each visit...
+2026-03-23 12:14:06,870 - INFO -   Clinical scores calculated. New variables: fib4, apri, ast
+2026-03-23 12:14:06,870 - INFO - Extracting trajectory features (including EWMA and last measurement)...
+Processing variables:   0%|          | 0/15 [00:00<?, ?it/s]Processing variables:   7%|▋         | 1/15 [00:00<00:05,  2.48it/s]Processing variables:  13%|█▎        | 2/15 [00:00<00:04,  2.70it/s]Processing variables:  20%|██        | 3/15 [00:01<00:04,  2.90it/s]Processing variables:  27%|██▋       | 4/15 [00:01<00:03,  2.82it/s]Processing variables:  33%|███▎      | 5/15 [00:01<00:03,  2.76it/s]Processing variables:  40%|████      | 6/15 [00:02<00:03,  2.85it/s]Processing variables:  47%|████▋     | 7/15 [00:02<00:02,  2.86it/s]Processing variables:  53%|█████▎    | 8/15 [00:02<00:02,  2.80it/s]Processing variables:  60%|██████    | 9/15 [00:03<00:02,  2.75it/s]Processing variables:  67%|██████▋   | 10/15 [00:03<00:01,  2.77it/s]Processing variables:  73%|███████▎  | 11/15 [00:03<00:01,  2.73it/s]Processing variables:  80%|████████  | 12/15 [00:04<00:01,  2.73it/s]Processing variables:  87%|████████▋ | 13/15 [00:04<00:00,  2.81it/s]Processing variables:  93%|█████████▎| 14/15 [00:04<00:00,  2.88it/s]Processing variables: 100%|██████████| 15/15 [00:05<00:00,  2.80it/s]Processing variables: 100%|██████████| 15/15 [00:05<00:00,  2.79it/s]
+2026-03-23 12:14:12,248 - INFO - Extracting cross-NIT concordance features...
+2026-03-23 12:14:12,256 - INFO - Feature engineering complete. Total features: 243
+2026-03-23 12:14:12,261 - INFO - Final feature matrix: (1253, 243)
+2026-03-23 12:14:12,261 - INFO - 
+================================================================================
+2026-03-23 12:14:12,261 - INFO - PHASE 2: SURVIVAL MODEL TRAINING
+2026-03-23 12:14:12,261 - INFO - ================================================================================
+2026-03-23 12:14:12,261 - INFO - 
+--- STAGE 1: DEATH MODEL ---
+2026-03-23 12:14:12,271 - INFO - DEATH target prepared:
+2026-03-23 12:14:12,271 - INFO -   Patients: 984
+2026-03-23 12:14:12,271 - INFO -   Events: 76 (7.7%)
+2026-03-23 12:14:12,271 - INFO -   Mean follow-up: 6.6 years
+2026-03-23 12:14:12,275 - INFO - 
+Starting 5-fold × 5-repeat stratified CV for death...
+2026-03-23 12:14:12,281 - INFO - Feature filtering: 235/243 retained (missing <= 0.6)
+2026-03-23 12:14:12,284 - INFO - 
+Repeat 1/5, Fold 1/5
+2026-03-23 12:14:12,289 - INFO - Fitting ensemble models...
+2026-03-23 12:14:12,289 - INFO -   Training RSF...
+2026-03-23 12:14:16,693 - INFO -   Training XGBoost...
+2026-03-23 12:14:17,744 - INFO -   Training CoxNet...
+2026-03-23 12:14:17,752 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:17,778 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:17,778 - INFO - 
+Repeat 1/5, Fold 2/5
+2026-03-23 12:14:17,784 - INFO - Fitting ensemble models...
+2026-03-23 12:14:17,784 - INFO -   Training RSF...
+2026-03-23 12:14:22,436 - INFO -   Training XGBoost...
+2026-03-23 12:14:23,191 - INFO -   Training CoxNet...
+2026-03-23 12:14:23,199 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:23,200 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:23,200 - INFO - 
+Repeat 1/5, Fold 3/5
+2026-03-23 12:14:23,206 - INFO - Fitting ensemble models...
+2026-03-23 12:14:23,206 - INFO -   Training RSF...
+2026-03-23 12:14:28,141 - INFO -   Training XGBoost...
+2026-03-23 12:14:28,899 - INFO -   Training CoxNet...
+2026-03-23 12:14:28,907 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:28,908 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:28,908 - INFO - 
+Repeat 1/5, Fold 4/5
+2026-03-23 12:14:28,914 - INFO - Fitting ensemble models...
+2026-03-23 12:14:28,914 - INFO -   Training RSF...
+2026-03-23 12:14:33,504 - INFO -   Training XGBoost...
+2026-03-23 12:14:34,258 - INFO -   Training CoxNet...
+2026-03-23 12:14:34,265 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:34,266 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:34,266 - INFO - 
+Repeat 1/5, Fold 5/5
+2026-03-23 12:14:34,272 - INFO - Fitting ensemble models...
+2026-03-23 12:14:34,272 - INFO -   Training RSF...
+2026-03-23 12:14:39,176 - INFO -   Training XGBoost...
+2026-03-23 12:14:39,925 - INFO -   Training CoxNet...
+2026-03-23 12:14:39,933 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:39,934 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:39,935 - INFO - 
+Repeat 2/5, Fold 1/5
+2026-03-23 12:14:39,940 - INFO - Fitting ensemble models...
+2026-03-23 12:14:39,941 - INFO -   Training RSF...
+2026-03-23 12:14:44,478 - INFO -   Training XGBoost...
+2026-03-23 12:14:45,245 - INFO -   Training CoxNet...
+2026-03-23 12:14:45,253 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:45,254 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:45,254 - INFO - 
+Repeat 2/5, Fold 2/5
+2026-03-23 12:14:45,260 - INFO - Fitting ensemble models...
+2026-03-23 12:14:45,260 - INFO -   Training RSF...
+2026-03-23 12:14:50,191 - INFO -   Training XGBoost...
+2026-03-23 12:14:50,955 - INFO -   Training CoxNet...
+2026-03-23 12:14:50,963 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:50,964 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:50,964 - INFO - 
+Repeat 2/5, Fold 3/5
+2026-03-23 12:14:50,970 - INFO - Fitting ensemble models...
+2026-03-23 12:14:50,970 - INFO -   Training RSF...
+2026-03-23 12:14:56,120 - INFO -   Training XGBoost...
+2026-03-23 12:14:56,883 - INFO -   Training CoxNet...
+2026-03-23 12:14:56,891 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:14:56,892 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:14:56,892 - INFO - 
+Repeat 2/5, Fold 4/5
+2026-03-23 12:14:56,897 - INFO - Fitting ensemble models...
+2026-03-23 12:14:56,897 - INFO -   Training RSF...
+2026-03-23 12:15:02,405 - INFO -   Training XGBoost...
+2026-03-23 12:15:04,763 - INFO -   Training CoxNet...
+2026-03-23 12:15:04,771 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:04,772 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:04,772 - INFO - 
+Repeat 2/5, Fold 5/5
+2026-03-23 12:15:04,778 - INFO - Fitting ensemble models...
+2026-03-23 12:15:04,778 - INFO -   Training RSF...
+2026-03-23 12:15:09,847 - INFO -   Training XGBoost...
+2026-03-23 12:15:10,705 - INFO -   Training CoxNet...
+2026-03-23 12:15:10,713 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:10,714 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:10,714 - INFO - 
+Repeat 3/5, Fold 1/5
+2026-03-23 12:15:10,720 - INFO - Fitting ensemble models...
+2026-03-23 12:15:10,720 - INFO -   Training RSF...
+2026-03-23 12:15:15,571 - INFO -   Training XGBoost...
+2026-03-23 12:15:16,334 - INFO -   Training CoxNet...
+2026-03-23 12:15:16,344 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:16,345 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:16,345 - INFO - 
+Repeat 3/5, Fold 2/5
+2026-03-23 12:15:16,350 - INFO - Fitting ensemble models...
+2026-03-23 12:15:16,350 - INFO -   Training RSF...
+2026-03-23 12:15:21,061 - INFO -   Training XGBoost...
+2026-03-23 12:15:21,847 - INFO -   Training CoxNet...
+2026-03-23 12:15:21,854 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:21,855 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:21,855 - INFO - 
+Repeat 3/5, Fold 3/5
+2026-03-23 12:15:21,861 - INFO - Fitting ensemble models...
+2026-03-23 12:15:21,861 - INFO -   Training RSF...
+2026-03-23 12:15:26,745 - INFO -   Training XGBoost...
+2026-03-23 12:15:27,510 - INFO -   Training CoxNet...
+2026-03-23 12:15:27,518 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:27,519 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:27,519 - INFO - 
+Repeat 3/5, Fold 4/5
+2026-03-23 12:15:27,524 - INFO - Fitting ensemble models...
+2026-03-23 12:15:27,524 - INFO -   Training RSF...
+2026-03-23 12:15:31,800 - INFO -   Training XGBoost...
+2026-03-23 12:15:32,552 - INFO -   Training CoxNet...
+2026-03-23 12:15:32,560 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:32,561 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:32,561 - INFO - 
+Repeat 3/5, Fold 5/5
+2026-03-23 12:15:32,566 - INFO - Fitting ensemble models...
+2026-03-23 12:15:32,567 - INFO -   Training RSF...
+2026-03-23 12:15:37,176 - INFO -   Training XGBoost...
+2026-03-23 12:15:37,947 - INFO -   Training CoxNet...
+2026-03-23 12:15:37,955 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:37,956 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:37,956 - INFO - 
+Repeat 4/5, Fold 1/5
+2026-03-23 12:15:38,007 - INFO - Fitting ensemble models...
+2026-03-23 12:15:38,007 - INFO -   Training RSF...
+2026-03-23 12:15:42,971 - INFO -   Training XGBoost...
+2026-03-23 12:15:43,749 - INFO -   Training CoxNet...
+2026-03-23 12:15:43,757 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:43,758 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:43,758 - INFO - 
+Repeat 4/5, Fold 2/5
+2026-03-23 12:15:43,764 - INFO - Fitting ensemble models...
+2026-03-23 12:15:43,764 - INFO -   Training RSF...
+2026-03-23 12:15:48,937 - INFO -   Training XGBoost...
+2026-03-23 12:15:49,721 - INFO -   Training CoxNet...
+2026-03-23 12:15:49,729 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:49,730 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:49,730 - INFO - 
+Repeat 4/5, Fold 3/5
+2026-03-23 12:15:49,736 - INFO - Fitting ensemble models...
+2026-03-23 12:15:49,736 - INFO -   Training RSF...
+2026-03-23 12:15:54,189 - INFO -   Training XGBoost...
+2026-03-23 12:15:54,961 - INFO -   Training CoxNet...
+2026-03-23 12:15:54,969 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:15:54,970 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:15:54,970 - INFO - 
+Repeat 4/5, Fold 4/5
+2026-03-23 12:15:54,975 - INFO - Fitting ensemble models...
+2026-03-23 12:15:54,976 - INFO -   Training RSF...
+2026-03-23 12:15:59,576 - INFO -   Training XGBoost...
+2026-03-23 12:16:00,433 - INFO -   Training CoxNet...
+2026-03-23 12:16:00,441 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:00,442 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:00,442 - INFO - 
+Repeat 4/5, Fold 5/5
+2026-03-23 12:16:00,448 - INFO - Fitting ensemble models...
+2026-03-23 12:16:00,448 - INFO -   Training RSF...
+2026-03-23 12:16:04,932 - INFO -   Training XGBoost...
+2026-03-23 12:16:05,693 - INFO -   Training CoxNet...
+2026-03-23 12:16:05,701 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:05,702 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:05,703 - INFO - 
+Repeat 5/5, Fold 1/5
+2026-03-23 12:16:05,708 - INFO - Fitting ensemble models...
+2026-03-23 12:16:05,708 - INFO -   Training RSF...
+2026-03-23 12:16:10,416 - INFO -   Training XGBoost...
+2026-03-23 12:16:11,462 - INFO -   Training CoxNet...
+2026-03-23 12:16:11,471 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:11,472 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:11,472 - INFO - 
+Repeat 5/5, Fold 2/5
+2026-03-23 12:16:11,478 - INFO - Fitting ensemble models...
+2026-03-23 12:16:11,478 - INFO -   Training RSF...
+2026-03-23 12:16:16,564 - INFO -   Training XGBoost...
+2026-03-23 12:16:18,654 - INFO -   Training CoxNet...
+2026-03-23 12:16:18,663 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:18,664 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:18,664 - INFO - 
+Repeat 5/5, Fold 3/5
+2026-03-23 12:16:18,670 - INFO - Fitting ensemble models...
+2026-03-23 12:16:18,670 - INFO -   Training RSF...
+2026-03-23 12:16:24,608 - INFO -   Training XGBoost...
+2026-03-23 12:16:28,111 - INFO -   Training CoxNet...
+2026-03-23 12:16:28,119 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:28,120 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:28,120 - INFO - 
+Repeat 5/5, Fold 4/5
+2026-03-23 12:16:28,126 - INFO - Fitting ensemble models...
+2026-03-23 12:16:28,126 - INFO -   Training RSF...
+2026-03-23 12:16:33,056 - INFO -   Training XGBoost...
+2026-03-23 12:16:33,819 - INFO -   Training CoxNet...
+2026-03-23 12:16:33,827 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:33,828 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:33,828 - INFO - 
+Repeat 5/5, Fold 5/5
+2026-03-23 12:16:33,834 - INFO - Fitting ensemble models...
+2026-03-23 12:16:33,834 - INFO -   Training RSF...
+2026-03-23 12:16:38,482 - INFO -   Training XGBoost...
+2026-03-23 12:16:39,234 - INFO -   Training CoxNet...
+2026-03-23 12:16:39,242 - WARNING -   Fold failed: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-23 12:16:39,243 - WARNING - Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 715, in cross_validate
+    ensemble.fit_models(X_train, y_train, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+
+2026-03-23 12:16:39,246 - INFO - 
+============================================================
+2026-03-23 12:16:39,246 - INFO - DEATH CV RESULTS:
+2026-03-23 12:16:39,246 - INFO - ============================================================
+2026-03-23 12:16:39,246 - INFO -   Total folds: 0
+2026-03-23 12:16:39,246 - INFO -   Fold C-indices: nan (+/- nan)
+2026-03-23 12:16:39,246 - INFO -   Overall OOF C-index: 0.5000
+2026-03-23 12:16:39,246 - INFO -   Per-repeat means: ['nan', 'nan', 'nan', 'nan', 'nan']
+2026-03-23 12:16:39,246 - INFO - ============================================================
+
+2026-03-23 12:16:39,247 - INFO - Fitting final ensemble on full training data...
+2026-03-23 12:16:39,254 - INFO - Feature filtering: 235/243 retained (missing <= 0.6)
+2026-03-23 12:16:39,256 - INFO - Fitting ensemble models...
+2026-03-23 12:16:39,256 - INFO -   Training RSF...
+2026-03-23 12:16:47,092 - INFO -   Training XGBoost...
+2026-03-23 12:16:47,980 - INFO -   Training CoxNet...
+Traceback (most recent call last):
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 950, in <module>
+    main()
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 856, in main
+    final_death_model = ensemble.fit_final_models(X_death, y_death)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 796, in fit_final_models
+    ensemble.fit_models(X, y, feature_names=X.columns.tolist())
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 538, in fit_models
+    self.models['coxnet'].fit(X, y)
+  File "/home/pushkar/trustii/src/pipeline_gemini.py", line 483, in fit
+    self.model.fit(X_scaled, y)
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 282, in fit
+    X, event_num, time, X_offset, X_scale = self._pre_fit(X, y)
+                                            ^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sksurv/linear_model/coxnet.py", line 203, in _pre_fit
+    X = validate_data(self, X, ensure_min_samples=2, dtype=np.float64, copy=self.copy_X)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2902, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/home/pushkar/trustii/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+CoxnetSurvivalAnalysis does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
