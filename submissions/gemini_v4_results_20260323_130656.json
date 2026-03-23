@@ -1,0 +1,9 @@
+{
+  "timestamp": "20260323_130656",
+  "death_ci": 0.9153314070571754,
+  "hepatic_ci": 0.7932248784842774,
+  "death_fold_std": 0.0289688933217183,
+  "hepatic_fold_std": 0.09521465856642061,
+  "n_features": 221,
+  "elapsed_minutes": 4.877039683333334
+}

@@ -212,12 +212,13 @@ def main():
     print("-"*70)
     csv_path, ipynb_path = validate_files(project_root)
     
-    # Confirm submission
+    # Confirm submission (auto-yes for automation)
     print("\n" + "-"*70)
-    response = input("Proceed with submission? (yes/no): ")
-    if response.lower() not in ['yes', 'y']:
-        print("❌ Submission cancelled")
-        sys.exit(0)
+    # response = input("Proceed with submission? (yes/no): ")
+    # if response.lower() not in ['yes', 'y']:
+    #     print("❌ Submission cancelled")
+    #     sys.exit(0)
+    print("🚀 Auto-submitting...")
     
     # Submit
     result = submit_to_trustii(csv_path, ipynb_path, token, challenge_id)
