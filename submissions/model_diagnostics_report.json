@@ -1,0 +1,74 @@
+{
+  "model_performance": {
+    "training_c_index": 0.9183943391859273,
+    "n_samples": 1253,
+    "n_events": 47,
+    "event_rate": 0.03750997605746209
+  },
+  "top_features": [
+    {
+      "feature": "fibs_stiffness_med_BM_1_mean",
+      "pred_correlation": 0.8315221496901414,
+      "target_correlation": 0.2909414602738497,
+      "combined_score": 1.122463609963991
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_median",
+      "pred_correlation": 0.8194935101273759,
+      "target_correlation": 0.29187564776302516,
+      "combined_score": 1.111369157890401
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_max",
+      "pred_correlation": 0.759902279304368,
+      "target_correlation": 0.270171072866763,
+      "combined_score": 1.0300733521711312
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_min",
+      "pred_correlation": 0.7451469761670918,
+      "target_correlation": 0.25113404757567903,
+      "combined_score": 0.9962810237427708
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_last",
+      "pred_correlation": 0.6975504499092188,
+      "target_correlation": 0.2117645637590813,
+      "combined_score": 0.9093150136683
+    },
+    {
+      "feature": "gender_x_lsm_max",
+      "pred_correlation": 0.6424533766901532,
+      "target_correlation": 0.22197055382279066,
+      "combined_score": 0.8644239305129439
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_time_high_risk",
+      "pred_correlation": 0.5965051067460097,
+      "target_correlation": 0.20830927638902108,
+      "combined_score": 0.8048143831350307
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_ever_very_high",
+      "pred_correlation": 0.572937615374857,
+      "target_correlation": 0.22276001949281923,
+      "combined_score": 0.7956976348676762
+    },
+    {
+      "feature": "fibs_stiffness_med_BM_1_std",
+      "pred_correlation": 0.5910391899659454,
+      "target_correlation": 0.18723407823998356,
+      "combined_score": 0.778273268205929
+    },
+    {
+      "feature": "aixp_aix_result_BM_3_mean",
+      "pred_correlation": 0.5380082238928056,
+      "target_correlation": 0.23681732119436436,
+      "combined_score": 0.7748255450871699
+    }
+  ],
+  "risk_stratification": {
+    "quartile_analysis": [
+      {
+        "quartile": "Low",
+        "n_patients": 

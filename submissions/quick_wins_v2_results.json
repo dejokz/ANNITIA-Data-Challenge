@@ -1,0 +1,8 @@
+{
+  "hepatic_ci": 0.8167509836987071,
+  "death_ci": 0.8893266789247877,
+  "average_ci": 0.8530388313117474,
+  "n_features": 617,
+  "n_selected_hepatic": 40,
+  "n_selected_death": 40
+}
