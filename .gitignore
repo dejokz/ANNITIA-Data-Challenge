@@ -1,0 +1,44 @@
+# Environment variables
+.env
+
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Data files (too large)
+data/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kimi sessions
+.kimi/
+
+# Large submission files (keep only best)
+submissions/*.csv
+!submissions/gemini_v2_submission_*.csv
+!submissions/notebook_submission.csv
+
+# Logs
+*.log
+
+# Exclude specific markdown files
+BEST_MODEL_SUMMARY.md
+GEMINI_BRANCH_SUMMARY.md
+DIAGNOSTICS_SUMMARY.md
+DIAGNOSTICS_IMPROVEMENT.md
+FINAL_ANALYSIS.md
+IMPROVEMENT_STRATEGY.md
+ROADMAP_TO_90.md
