@@ -1,5 +1,5 @@
 ---
-hepatic_ci:       0.808551
+hepatic_ci:       0.826720
 death_ci:         0.931179
-average_ci:       0.869865
-elapsed_seconds:  48.6
+average_ci:       0.878950
+elapsed_seconds:  51.9

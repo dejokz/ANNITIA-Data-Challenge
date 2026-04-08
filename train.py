@@ -3,8 +3,8 @@ ANNITIA Autoresearch — train.py
 This is the ONLY file the agent should edit.
 Run: python train.py
 
-Experiment #3: 3-model death ensemble (RSF + XGB Cox + XGBRegressor log-time)
-+ hepatic RSF with top-80 univariate features.
+Experiment #4b: Hepatic 2-model ensemble (RSF + XGB Cox) on full features.
+Keep proven 3-model death ensemble.
 """
 
 import warnings
@@ -155,34 +155,6 @@ def extract_trajectory_features(df):
 
 
 # ---------------------------------------------------------------------------
-# Feature Selection
-# ---------------------------------------------------------------------------
-
-def rank_features(X, y, feature_list):
-    """Rank features by univariate C-index."""
-    scores = []
-    event_indicator = y[y.dtype.names[0]]
-    time_to_event = y[y.dtype.names[1]]
-    for feature in feature_list:
-        if feature not in X.columns:
-            continue
-        values = X[feature].fillna(X[feature].median())
-        # Orient correctly
-        corr = np.corrcoef(values, event_indicator)[0, 1]
-        if corr < 0:
-            values = -values
-        try:
-            ci = concordance_index_censored(
-                event_indicator.astype(bool), time_to_event, values.values
-            )[0]
-            scores.append({'feature': feature, 'c_index': ci})
-        except Exception:
-            pass
-    scores_df = pd.DataFrame(scores).sort_values('c_index', ascending=False)
-    return scores_df
-
-
-# ---------------------------------------------------------------------------
 # Models
 # ---------------------------------------------------------------------------
 
@@ -286,6 +258,29 @@ class XGBRegressorSurvivalModel:
         return -self.model.predict(X_proc)
 
 
+class HepaticEnsemble:
+    """2-model ensemble: RSF + XGB Cox for hepatic."""
+    def __init__(self, rsf_weight=0.6):
+        self.rsf_weight = rsf_weight
+        self.xgb_weight = 1.0 - rsf_weight
+        self.rsf = RSFModel(n_estimators=300, min_samples_leaf=20)
+        self.xgb_cox = XGBCoxModel(max_depth=4, learning_rate=0.05, num_boost_round=100)
+
+    def fit(self, X, y):
+        self.rsf.fit(X, y)
+        self.xgb_cox.fit(X, y)
+        return self
+
+    def predict(self, X):
+        p_rsf = self.rsf.predict(X)
+        p_cox = self.xgb_cox.predict(X)
+        for p in [p_rsf, p_cox]:
+            if np.std(p) > 0:
+                p -= np.mean(p)
+                p /= (np.std(p) + 1e-8)
+        return self.rsf_weight * p_rsf + self.xgb_weight * p_cox
+
+
 class DeathEnsemble:
     """3-model ensemble: RSF + XGB Cox + XGBRegressor."""
     def __init__(self, weights=None):
@@ -361,17 +356,12 @@ def main():
     # AGENT EDIT ZONE
     # -----------------------------------------------------------------------
 
-    # Hepatic: top-80 univariate features + RSF
-    ranked_hep = rank_features(X_hep, y_hep, common_cols)
-    top_features_hep = ranked_hep.head(80)['feature'].tolist()
-    X_hep_sel = X_hep[top_features_hep]
-    X_test_hep_sel = X_test_hep[top_features_hep]
+    # Hepatic: 2-model ensemble (RSF + XGB Cox)
+    oof_hep = cross_validate(X_hep, y_hep, HepaticEnsemble, n_folds=N_FOLDS, rsf_weight=0.6)
+    final_hep = HepaticEnsemble(rsf_weight=0.6).fit(X_hep, y_hep)
+    pred_hep = final_hep.predict(X_test_hep)
 
-    oof_hep = cross_validate(X_hep_sel, y_hep, RSFModel, n_folds=N_FOLDS, n_estimators=400, min_samples_leaf=20)
-    final_hep = RSFModel(n_estimators=600, min_samples_leaf=20).fit(X_hep_sel, y_hep)
-    pred_hep = final_hep.predict(X_test_hep_sel)
-
-    # Death: 3-model ensemble
+    # Death: proven 3-model ensemble
     oof_death = cross_validate(X_death, y_death, DeathEnsemble, n_folds=N_FOLDS)
     final_death = DeathEnsemble().fit(X_death, y_death)
     pred_death = final_death.predict(X_test_death)
