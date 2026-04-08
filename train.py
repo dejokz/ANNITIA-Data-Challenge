@@ -1,0 +1,301 @@
+"""
+ANNITIA Autoresearch — train.py
+This is the ONLY file the agent should edit.
+Run: python train.py
+"""
+
+import warnings
+warnings.filterwarnings('ignore')
+
+import json
+import time
+import numpy as np
+import pandas as pd
+from scipy import stats
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import StratifiedKFold
+from sksurv.ensemble import RandomSurvivalForest
+import xgboost as xgb
+
+from prepare import load_data, prepare_survival_target, score_cv, format_submission
+
+RANDOM_STATE = 42
+N_FOLDS = 5
+
+# ---------------------------------------------------------------------------
+# Feature Engineering (agent: improve/modify/add features here)
+# ---------------------------------------------------------------------------
+
+def calculate_clinical_scores(df):
+    result = df.copy()
+    max_visits = 22
+    for visit in range(1, max_visits + 1):
+        age_col = f'Age_v{visit}'
+        ast_col = f'ast_v{visit}'
+        alt_col = f'alt_v{visit}'
+        plt_col = f'plt_v{visit}'
+        required = [age_col, ast_col, alt_col, plt_col]
+        if all(col in result.columns for col in required):
+            result[f'fib4_v{visit}'] = (
+                result[age_col] * result[ast_col] /
+                (result[plt_col] * np.sqrt(result[alt_col].clip(lower=1)) + 0.001)
+            )
+            ULN_AST = 40
+            result[f'apri_v{visit}'] = (
+                (result[ast_col] / ULN_AST * 100) / (result[plt_col] + 0.001)
+            )
+            result[f'ast_alt_ratio_v{visit}'] = result[ast_col] / (result[alt_col] + 0.001)
+    return result
+
+
+def _calculate_slope(values):
+    valid = values.dropna()
+    if len(valid) < 2:
+        return 0.0
+    x = np.arange(len(valid))
+    slope, _, _, _, _ = stats.linregress(x, valid.values)
+    return slope
+
+
+def extract_trajectory_features(df):
+    visit_vars = [
+        'fibs_stiffness_med_BM_1', 'fibrotest_BM_2', 'aixp_aix_result_BM_3',
+        'alt', 'ast', 'plt', 'bilirubin', 'ggt',
+        'gluc_fast', 'chol', 'triglyc', 'BMI',
+        'fib4', 'apri', 'ast_alt_ratio'
+    ]
+    features = pd.DataFrame(index=df.index)
+
+    for var in visit_vars:
+        visit_cols = [c for c in df.columns
+                      if c.startswith(f'{var}_v') and c.split('_v')[-1].isdigit()]
+        if not visit_cols:
+            continue
+        visit_nums = [int(c.split('_v')[-1]) for c in visit_cols]
+        sorted_pairs = sorted(zip(visit_nums, visit_cols))
+        sorted_cols = [col for _, col in sorted_pairs]
+        values = df[sorted_cols]
+
+        features[f'{var}_max'] = values.max(axis=1)
+        features[f'{var}_min'] = values.min(axis=1)
+        features[f'{var}_mean'] = values.mean(axis=1)
+        features[f'{var}_std'] = values.std(axis=1)
+        features[f'{var}_first'] = values.iloc[:, 0]
+        features[f'{var}_last'] = values.ffill(axis=1).iloc[:, -1]
+        features[f'{var}_range'] = features[f'{var}_max'] - features[f'{var}_min']
+        features[f'{var}_slope'] = values.apply(_calculate_slope, axis=1)
+
+        age_cols = [c for c in df.columns if c.startswith('Age_v')]
+        time_span = df[age_cols].max(axis=1) - df[age_cols].min(axis=1)
+        features[f'{var}_roc'] = (features[f'{var}_last'] - features[f'{var}_first']) / (time_span + 0.001)
+
+        if var == 'fib4':
+            features[f'{var}_time_high'] = (values > 2.67).sum(axis=1) / (values.notna().sum(axis=1) + 0.001)
+            features[f'{var}_ever_high'] = (values > 2.67).any(axis=1).astype(int)
+            features[f'{var}_worsening'] = (features[f'{var}_slope'] > 0.1).astype(int)
+        elif var == 'fibs_stiffness_med_BM_1':
+            features[f'{var}_time_high'] = (values > 8.0).sum(axis=1) / (values.notna().sum(axis=1) + 0.001)
+            features[f'{var}_ever_high'] = (values > 8.0).any(axis=1).astype(int)
+            features[f'{var}_worsening'] = (features[f'{var}_slope'] > 0.5).astype(int)
+        elif var == 'fibrotest_BM_2':
+            features[f'{var}_time_high'] = (values > 0.72).sum(axis=1) / (values.notna().sum(axis=1) + 0.001)
+            features[f'{var}_ever_high'] = (values > 0.72).any(axis=1).astype(int)
+        elif var == 'plt':
+            features[f'{var}_declining'] = (features[f'{var}_slope'] < -5).astype(int)
+
+    # Cross-NIT concordance
+    nit_pairs = [
+        ('fibs_stiffness_med_BM_1', 'fib4'),
+        ('fibs_stiffness_med_BM_1', 'fibrotest_BM_2'),
+        ('fib4', 'fibrotest_BM_2'),
+    ]
+    for nit1, nit2 in nit_pairs:
+        slope1_col = f'{nit1}_slope'
+        slope2_col = f'{nit2}_slope'
+        if slope1_col in features.columns and slope2_col in features.columns:
+            features[f'{nit1}_{nit2}_slope_agree'] = ((features[slope1_col] * features[slope2_col]) > 0).astype(int)
+
+    fibrosis_markers = ['fibs_stiffness_med_BM_1_worsening', 'fib4_worsening', 'fibrotest_BM_2_worsening']
+    available_markers = [c for c in fibrosis_markers if c in features.columns]
+    if len(available_markers) >= 2:
+        features['any_fibrosis_worsening'] = features[available_markers].any(axis=1).astype(int)
+        features['n_fibrosis_worsening'] = features[available_markers].sum(axis=1)
+
+    # Static features + interactions
+    static_cols = ['gender', 'T2DM', 'Hypertension', 'Dyslipidaemia', 'bariatric_surgery']
+    for col in static_cols:
+        if col in df.columns:
+            features[col] = df[col]
+    if 'T2DM' in features.columns and 'fib4_max' in features.columns:
+        features['T2DM_x_fib4_max'] = features['T2DM'] * features['fib4_max']
+
+    age_cols = [c for c in df.columns if c.startswith('Age_v')]
+    if age_cols:
+        features['age_baseline'] = df[age_cols].min(axis=1)
+        features['age_last'] = df[age_cols].max(axis=1)
+
+    return features
+
+
+# ---------------------------------------------------------------------------
+# Models (agent: modify architecture, hyperparameters, or add new models here)
+# ---------------------------------------------------------------------------
+
+class SimpleEnsemble:
+    def __init__(self, weights=None):
+        self.weights = weights or {'rsf': 0.6, 'xgb': 0.4}
+        self.rsf = None
+        self.xgb = None
+        self.imputer = None
+        self.scaler = None
+
+    def fit(self, X, y):
+        self.imputer = SimpleImputer(strategy='median')
+        self.scaler = StandardScaler()
+        X_proc = self.scaler.fit_transform(self.imputer.fit_transform(X))
+
+        self.rsf = RandomSurvivalForest(
+            n_estimators=300,
+            min_samples_leaf=20,
+            max_features='sqrt',
+            n_jobs=-1,
+            random_state=RANDOM_STATE
+        )
+        self.rsf.fit(X_proc, y)
+
+        # XGBoost with survival:cox
+        y_lower = np.where(y['Time'], y['Time'], 0.001)
+        y_upper = np.where(y['HepaticEvent'] if 'HepaticEvent' in y.dtype.names else y['Death'], y['Time'], float('inf'))
+        dtrain = xgb.DMatrix(X_proc, label=y_lower)
+        dtrain.set_float_info('label_lower_bound', y_lower)
+        dtrain.set_float_info('label_upper_bound', y_upper)
+
+        params = {
+            'objective': 'survival:cox',
+            'eval_metric': 'cox-nloglik',
+            'max_depth': 4,
+            'learning_rate': 0.05,
+            'subsample': 0.8,
+            'colsample_bytree': 0.8,
+            'min_child_weight': 5,
+            'random_state': RANDOM_STATE,
+        }
+        self.xgb = xgb.train(params, dtrain, num_boost_round=100)
+        return self
+
+    def predict(self, X):
+        X_proc = self.scaler.transform(self.imputer.transform(X))
+        rsf_pred = self.rsf.predict(X_proc)
+        xgb_pred = self.xgb.predict(xgb.DMatrix(X_proc))
+        # Normalize to same scale before weighting
+        rsf_pred = (rsf_pred - rsf_pred.mean()) / (rsf_pred.std() + 1e-8)
+        xgb_pred = (xgb_pred - xgb_pred.mean()) / (xgb_pred.std() + 1e-8)
+        return self.weights['rsf'] * rsf_pred + self.weights['xgb'] * xgb_pred
+
+
+class RSFModel:
+    """Simple RSF wrapper for quick experiments."""
+    def __init__(self, n_estimators=300, min_samples_leaf=20):
+        self.n_estimators = n_estimators
+        self.min_samples_leaf = min_samples_leaf
+        self.model = None
+        self.imputer = None
+        self.scaler = None
+
+    def fit(self, X, y):
+        self.imputer = SimpleImputer(strategy='median')
+        self.scaler = StandardScaler()
+        X_proc = self.scaler.fit_transform(self.imputer.fit_transform(X))
+        self.model = RandomSurvivalForest(
+            n_estimators=self.n_estimators,
+            min_samples_leaf=self.min_samples_leaf,
+            max_features='sqrt',
+            n_jobs=-1,
+            random_state=RANDOM_STATE
+        )
+        self.model.fit(X_proc, y)
+        return self
+
+    def predict(self, X):
+        X_proc = self.scaler.transform(self.imputer.transform(X))
+        return self.model.predict(X_proc)
+
+
+# ---------------------------------------------------------------------------
+# CV Harness (agent: you can change the model used per outcome here)
+# ---------------------------------------------------------------------------
+
+def cross_validate(X, y, model_class, n_folds=N_FOLDS, **model_kwargs):
+    event_indicator = y[y.dtype.names[0]]
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=RANDOM_STATE)
+    oof = np.zeros(len(X))
+    for fold, (tr_idx, val_idx) in enumerate(skf.split(X, event_indicator)):
+        X_tr, X_val = X.iloc[tr_idx], X.iloc[val_idx]
+        y_tr = y[tr_idx]
+        model = model_class(**model_kwargs).fit(X_tr, y_tr)
+        oof[val_idx] = model.predict(X_val)
+    return oof
+
+
+# ---------------------------------------------------------------------------
+# Main (agent: change models, add feature selection, or try new ideas here)
+# ---------------------------------------------------------------------------
+
+def main():
+    start = time.time()
+
+    train_df, test_df = load_data()
+
+    # Feature engineering
+    train_df = calculate_clinical_scores(train_df)
+    test_df = calculate_clinical_scores(test_df)
+    X_train = extract_trajectory_features(train_df)
+    X_test = extract_trajectory_features(test_df)
+
+    common_cols = [c for c in X_train.columns if c in X_test.columns]
+    X_train = X_train[common_cols]
+    X_test = X_test[common_cols]
+
+    # Prepare targets
+    df_hep, y_hep = prepare_survival_target(train_df, 'hepatic')
+    df_death, y_death = prepare_survival_target(train_df, 'death')
+
+    X_hep = X_train.loc[df_hep.index]
+    X_death = X_train.loc[df_death.index]
+    X_test_hep = X_test.loc[test_df.index]
+    X_test_death = X_test.loc[test_df.index]
+
+    # -----------------------------------------------------------------------
+    # AGENT EDIT ZONE: choose models, do feature selection, add ensembles, etc.
+    # -----------------------------------------------------------------------
+
+    # Hepatic model
+    oof_hep = cross_validate(X_hep, y_hep, RSFModel, n_folds=N_FOLDS, n_estimators=300, min_samples_leaf=20)
+    final_hep = RSFModel(n_estimators=500, min_samples_leaf=20).fit(X_hep, y_hep)
+    pred_hep = final_hep.predict(X_test_hep)
+
+    # Death model
+    oof_death = cross_validate(X_death, y_death, SimpleEnsemble, n_folds=N_FOLDS)
+    final_death = SimpleEnsemble().fit(X_death, y_death)
+    pred_death = final_death.predict(X_test_death)
+
+    # -----------------------------------------------------------------------
+
+    scores = score_cv(oof_hep, y_hep, oof_death, y_death)
+    elapsed = time.time() - start
+
+    # Save submission
+    sub = format_submission(test_df, pred_hep, pred_death)
+    sub.to_csv('submissions/latest_submission.csv', index=False)
+
+    # Print standardized output
+    print("---")
+    print(f"hepatic_ci:       {scores['hepatic_ci']:.6f}")
+    print(f"death_ci:         {scores['death_ci']:.6f}")
+    print(f"average_ci:       {scores['average_ci']:.6f}")
+    print(f"elapsed_seconds:  {elapsed:.1f}")
+
+
+if __name__ == '__main__':
+    main()

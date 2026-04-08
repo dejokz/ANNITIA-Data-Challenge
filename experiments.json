@@ -1,0 +1,17 @@
+{
+  "experiments": [
+    {
+      "id": 0,
+      "timestamp": "2026-04-08T16:00:00Z",
+      "commit": null,
+      "hepatic_ci": 0.7882,
+      "death_ci": 0.9153,
+      "average_ci": 0.8529,
+      "status": "keep",
+      "note": "Gemini v2 baseline from parent repo"
+    }
+  ],
+  "best_score": 0.8529,
+  "best_commit": null,
+  "baseline_commit": null
+}
