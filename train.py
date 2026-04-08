@@ -2,6 +2,9 @@
 ANNITIA Autoresearch — train.py
 This is the ONLY file the agent should edit.
 Run: python train.py
+
+Experiment #1: Pure XGBoost for death (matches Gemini v2 winning approach)
++ Univariate C-index feature selection for hepatic to reduce noise.
 """
 
 import warnings
@@ -14,8 +17,9 @@ import pandas as pd
 from scipy import stats
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold
 from sksurv.ensemble import RandomSurvivalForest
+from sksurv.metrics import concordance_index_censored
 import xgboost as xgb
 
 from prepare import load_data, prepare_survival_target, score_cv, format_submission
@@ -24,7 +28,7 @@ RANDOM_STATE = 42
 N_FOLDS = 5
 
 # ---------------------------------------------------------------------------
-# Feature Engineering (agent: improve/modify/add features here)
+# Feature Engineering
 # ---------------------------------------------------------------------------
 
 def calculate_clinical_scores(df):
@@ -90,6 +94,13 @@ def extract_trajectory_features(df):
         time_span = df[age_cols].max(axis=1) - df[age_cols].min(axis=1)
         features[f'{var}_roc'] = (features[f'{var}_last'] - features[f'{var}_first']) / (time_span + 0.001)
 
+        # Variability
+        features[f'{var}_cv'] = features[f'{var}_std'] / (features[f'{var}_mean'].abs() + 0.001)
+
+        # Visit-to-visit deltas
+        features[f'{var}_max_delta'] = values.diff(axis=1).max(axis=1)
+        features[f'{var}_min_delta'] = values.diff(axis=1).min(axis=1)
+
         if var == 'fib4':
             features[f'{var}_time_high'] = (values > 2.67).sum(axis=1) / (values.notna().sum(axis=1) + 0.001)
             features[f'{var}_ever_high'] = (values > 2.67).any(axis=1).astype(int)
@@ -129,24 +140,68 @@ def extract_trajectory_features(df):
             features[col] = df[col]
     if 'T2DM' in features.columns and 'fib4_max' in features.columns:
         features['T2DM_x_fib4_max'] = features['T2DM'] * features['fib4_max']
+    if 'Hypertension' in features.columns and 'fibs_stiffness_med_BM_1_max' in features.columns:
+        features['Hypertension_x_lsm_max'] = features['Hypertension'] * features['fibs_stiffness_med_BM_1_max']
+    if 'age_last' in features.columns and 'fib4_mean' in features.columns:
+        features['age_x_fib4_mean'] = features['age_last'] * features['fib4_mean']
 
     age_cols = [c for c in df.columns if c.startswith('Age_v')]
     if age_cols:
         features['age_baseline'] = df[age_cols].min(axis=1)
         features['age_last'] = df[age_cols].max(axis=1)
+        features['followup_years'] = features['age_last'] - features['age_baseline']
 
     return features
 
 
 # ---------------------------------------------------------------------------
-# Models (agent: modify architecture, hyperparameters, or add new models here)
+# Feature Selection
 # ---------------------------------------------------------------------------
 
-class SimpleEnsemble:
-    def __init__(self, weights=None):
-        self.weights = weights or {'rsf': 0.6, 'xgb': 0.4}
-        self.rsf = None
-        self.xgb = None
+def rank_features(X, y, feature_list):
+    """Rank features by univariate C-index."""
+    scores = []
+    event_indicator = y[y.dtype.names[0]]
+    time_to_event = y[y.dtype.names[1]]
+    for feature in feature_list:
+        if feature not in X.columns:
+            continue
+        values = X[feature].fillna(X[feature].median())
+        # Orient correctly
+        corr = np.corrcoef(values, event_indicator)[0, 1]
+        if corr < 0:
+            values = -values
+        try:
+            ci = concordance_index_censored(
+                event_indicator.astype(bool), time_to_event, values.values
+            )[0]
+            scores.append({'feature': feature, 'c_index': ci})
+        except Exception:
+            pass
+    scores_df = pd.DataFrame(scores).sort_values('c_index', ascending=False)
+    return scores_df
+
+
+# ---------------------------------------------------------------------------
+# Models
+# ---------------------------------------------------------------------------
+
+class XGBModel:
+    """Pure XGBoost survival model. This is what gave death 0.9153 in Gemini v2."""
+    def __init__(self, max_depth=6, learning_rate=0.05, num_boost_round=200,
+                 subsample=0.8, colsample_bytree=0.8, min_child_weight=3):
+        self.params = {
+            'objective': 'survival:cox',
+            'eval_metric': 'cox-nloglik',
+            'max_depth': max_depth,
+            'learning_rate': learning_rate,
+            'subsample': subsample,
+            'colsample_bytree': colsample_bytree,
+            'min_child_weight': min_child_weight,
+            'random_state': RANDOM_STATE,
+        }
+        self.num_boost_round = num_boost_round
+        self.model = None
         self.imputer = None
         self.scaler = None
 
@@ -155,43 +210,21 @@ class SimpleEnsemble:
         self.scaler = StandardScaler()
         X_proc = self.scaler.fit_transform(self.imputer.fit_transform(X))
 
-        self.rsf = RandomSurvivalForest(
-            n_estimators=300,
-            min_samples_leaf=20,
-            max_features='sqrt',
-            n_jobs=-1,
-            random_state=RANDOM_STATE
-        )
-        self.rsf.fit(X_proc, y)
+        event = y[y.dtype.names[0]]
+        time_ = y[y.dtype.names[1]]
+        y_lower = np.where(event, time_, time_)
+        y_upper = np.where(event, time_, float('inf'))
 
-        # XGBoost with survival:cox
-        y_lower = np.where(y['Time'], y['Time'], 0.001)
-        y_upper = np.where(y['HepaticEvent'] if 'HepaticEvent' in y.dtype.names else y['Death'], y['Time'], float('inf'))
         dtrain = xgb.DMatrix(X_proc, label=y_lower)
         dtrain.set_float_info('label_lower_bound', y_lower)
         dtrain.set_float_info('label_upper_bound', y_upper)
 
-        params = {
-            'objective': 'survival:cox',
-            'eval_metric': 'cox-nloglik',
-            'max_depth': 4,
-            'learning_rate': 0.05,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'min_child_weight': 5,
-            'random_state': RANDOM_STATE,
-        }
-        self.xgb = xgb.train(params, dtrain, num_boost_round=100)
+        self.model = xgb.train(self.params, dtrain, num_boost_round=self.num_boost_round)
         return self
 
     def predict(self, X):
         X_proc = self.scaler.transform(self.imputer.transform(X))
-        rsf_pred = self.rsf.predict(X_proc)
-        xgb_pred = self.xgb.predict(xgb.DMatrix(X_proc))
-        # Normalize to same scale before weighting
-        rsf_pred = (rsf_pred - rsf_pred.mean()) / (rsf_pred.std() + 1e-8)
-        xgb_pred = (xgb_pred - xgb_pred.mean()) / (xgb_pred.std() + 1e-8)
-        return self.weights['rsf'] * rsf_pred + self.weights['xgb'] * xgb_pred
+        return self.model.predict(xgb.DMatrix(X_proc))
 
 
 class RSFModel:
@@ -223,7 +256,7 @@ class RSFModel:
 
 
 # ---------------------------------------------------------------------------
-# CV Harness (agent: you can change the model used per outcome here)
+# CV Harness
 # ---------------------------------------------------------------------------
 
 def cross_validate(X, y, model_class, n_folds=N_FOLDS, **model_kwargs):
@@ -239,7 +272,7 @@ def cross_validate(X, y, model_class, n_folds=N_FOLDS, **model_kwargs):
 
 
 # ---------------------------------------------------------------------------
-# Main (agent: change models, add feature selection, or try new ideas here)
+# Main
 # ---------------------------------------------------------------------------
 
 def main():
@@ -267,17 +300,23 @@ def main():
     X_test_death = X_test.loc[test_df.index]
 
     # -----------------------------------------------------------------------
-    # AGENT EDIT ZONE: choose models, do feature selection, add ensembles, etc.
+    # AGENT EDIT ZONE
     # -----------------------------------------------------------------------
 
-    # Hepatic model
-    oof_hep = cross_validate(X_hep, y_hep, RSFModel, n_folds=N_FOLDS, n_estimators=300, min_samples_leaf=20)
-    final_hep = RSFModel(n_estimators=500, min_samples_leaf=20).fit(X_hep, y_hep)
-    pred_hep = final_hep.predict(X_test_hep)
+    # Hepatic: use top features by univariate C-index ranking, then RSF
+    ranked_hep = rank_features(X_hep, y_hep, common_cols)
+    top_features_hep = ranked_hep.head(60)['feature'].tolist()
+    X_hep_sel = X_hep[top_features_hep]
+    X_test_hep_sel = X_test_hep[top_features_hep]
 
-    # Death model
-    oof_death = cross_validate(X_death, y_death, SimpleEnsemble, n_folds=N_FOLDS)
-    final_death = SimpleEnsemble().fit(X_death, y_death)
+    oof_hep = cross_validate(X_hep_sel, y_hep, RSFModel, n_folds=N_FOLDS, n_estimators=300, min_samples_leaf=20)
+    final_hep = RSFModel(n_estimators=500, min_samples_leaf=20).fit(X_hep_sel, y_hep)
+    pred_hep = final_hep.predict(X_test_hep_sel)
+
+    # Death: pure XGBoost (the Gemini v2 winning approach)
+    oof_death = cross_validate(X_death, y_death, XGBModel, n_folds=N_FOLDS,
+                               max_depth=6, learning_rate=0.05, num_boost_round=200)
+    final_death = XGBModel(max_depth=6, learning_rate=0.05, num_boost_round=200).fit(X_death, y_death)
     pred_death = final_death.predict(X_test_death)
 
     # -----------------------------------------------------------------------
