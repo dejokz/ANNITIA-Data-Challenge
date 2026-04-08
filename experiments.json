@@ -3,7 +3,7 @@
     {
       "id": 0,
       "timestamp": "2026-04-08T16:45:00Z",
-      "commit": "f3ebb0b",
+      "commit": "9559fc2",
       "hepatic_ci": 0.809973,
       "death_ci": 0.888057,
       "average_ci": 0.849015,
@@ -12,6 +12,6 @@
     }
   ],
   "best_score": 0.849015,
-  "best_commit": "f3ebb0b",
-  "baseline_commit": "f3ebb0b"
+  "best_commit": "9559fc2",
+  "baseline_commit": "9559fc2"
 }
