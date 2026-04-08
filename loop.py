@@ -8,7 +8,7 @@ import json
 import os
 import re
 import subprocess
-import sys
+PYTHON = "../.venv/bin/python"
 import time
 from datetime import datetime
 
@@ -60,7 +60,7 @@ def git_reset_hard(target):
 def run_simulate():
     print("🔍 Running simulate.py...")
     result = subprocess.run(
-        [sys.executable, "simulate.py"],
+        [PYTHON, "simulate.py"],
         capture_output=True, text=True, timeout=SIM_TIMEOUT
     )
     if result.returncode != 0:
@@ -75,7 +75,7 @@ def run_train():
     print("🏃 Running train.py...")
     with open(RUN_LOG, "w") as log_f:
         result = subprocess.run(
-            [sys.executable, "train.py"],
+            [PYTHON, "train.py"],
             stdout=log_f, stderr=subprocess.STDOUT,
             timeout=TRAIN_TIMEOUT
         )

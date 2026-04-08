@@ -2,16 +2,16 @@
   "experiments": [
     {
       "id": 0,
-      "timestamp": "2026-04-08T16:00:00Z",
-      "commit": null,
-      "hepatic_ci": 0.7882,
-      "death_ci": 0.9153,
-      "average_ci": 0.8529,
+      "timestamp": "2026-04-08T16:45:00Z",
+      "commit": "f3ebb0b",
+      "hepatic_ci": 0.809973,
+      "death_ci": 0.888057,
+      "average_ci": 0.849015,
       "status": "keep",
-      "note": "Gemini v2 baseline from parent repo"
+      "note": "Autoresearch baseline: RSF hepatic, SimpleEnsemble death"
     }
   ],
-  "best_score": 0.8529,
-  "best_commit": null,
-  "baseline_commit": null
+  "best_score": 0.849015,
+  "best_commit": "f3ebb0b",
+  "baseline_commit": "f3ebb0b"
 }
