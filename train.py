@@ -3,8 +3,8 @@ ANNITIA Autoresearch — train.py
 This is the ONLY file the agent should edit.
 Run: python train.py
 
-Experiment #1: Pure XGBoost for death (matches Gemini v2 winning approach)
-+ Univariate C-index feature selection for hepatic to reduce noise.
+Experiment #3: 3-model death ensemble (RSF + XGB Cox + XGBRegressor log-time)
++ hepatic RSF with top-80 univariate features.
 """
 
 import warnings
@@ -17,7 +17,7 @@ import pandas as pd
 from scipy import stats
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sksurv.ensemble import RandomSurvivalForest
 from sksurv.metrics import concordance_index_censored
 import xgboost as xgb
@@ -186,49 +186,8 @@ def rank_features(X, y, feature_list):
 # Models
 # ---------------------------------------------------------------------------
 
-class XGBModel:
-    """Pure XGBoost survival model. This is what gave death 0.9153 in Gemini v2."""
-    def __init__(self, max_depth=6, learning_rate=0.05, num_boost_round=200,
-                 subsample=0.8, colsample_bytree=0.8, min_child_weight=3):
-        self.params = {
-            'objective': 'survival:cox',
-            'eval_metric': 'cox-nloglik',
-            'max_depth': max_depth,
-            'learning_rate': learning_rate,
-            'subsample': subsample,
-            'colsample_bytree': colsample_bytree,
-            'min_child_weight': min_child_weight,
-            'random_state': RANDOM_STATE,
-        }
-        self.num_boost_round = num_boost_round
-        self.model = None
-        self.imputer = None
-        self.scaler = None
-
-    def fit(self, X, y):
-        self.imputer = SimpleImputer(strategy='median')
-        self.scaler = StandardScaler()
-        X_proc = self.scaler.fit_transform(self.imputer.fit_transform(X))
-
-        event = y[y.dtype.names[0]]
-        time_ = y[y.dtype.names[1]]
-        y_lower = np.where(event, time_, time_)
-        y_upper = np.where(event, time_, float('inf'))
-
-        dtrain = xgb.DMatrix(X_proc, label=y_lower)
-        dtrain.set_float_info('label_lower_bound', y_lower)
-        dtrain.set_float_info('label_upper_bound', y_upper)
-
-        self.model = xgb.train(self.params, dtrain, num_boost_round=self.num_boost_round)
-        return self
-
-    def predict(self, X):
-        X_proc = self.scaler.transform(self.imputer.transform(X))
-        return self.model.predict(xgb.DMatrix(X_proc))
-
-
 class RSFModel:
-    """Simple RSF wrapper for quick experiments."""
+    """Simple RSF wrapper."""
     def __init__(self, n_estimators=300, min_samples_leaf=20):
         self.n_estimators = n_estimators
         self.min_samples_leaf = min_samples_leaf
@@ -253,6 +212,105 @@ class RSFModel:
     def predict(self, X):
         X_proc = self.scaler.transform(self.imputer.transform(X))
         return self.model.predict(X_proc)
+
+
+class XGBCoxModel:
+    """XGBoost survival:cox wrapper."""
+    def __init__(self, max_depth=4, learning_rate=0.05, num_boost_round=100,
+                 subsample=0.8, colsample_bytree=0.8, min_child_weight=5):
+        self.params = {
+            'objective': 'survival:cox',
+            'eval_metric': 'cox-nloglik',
+            'max_depth': max_depth,
+            'learning_rate': learning_rate,
+            'subsample': subsample,
+            'colsample_bytree': colsample_bytree,
+            'min_child_weight': min_child_weight,
+            'random_state': RANDOM_STATE,
+        }
+        self.num_boost_round = num_boost_round
+        self.model = None
+        self.imputer = None
+        self.scaler = None
+
+    def fit(self, X, y):
+        self.imputer = SimpleImputer(strategy='median')
+        self.scaler = StandardScaler()
+        X_proc = self.scaler.fit_transform(self.imputer.fit_transform(X))
+        time_ = y[y.dtype.names[1]]
+        event = y[y.dtype.names[0]]
+        y_lower = time_
+        y_upper = np.where(event, time_, float('inf'))
+        dtrain = xgb.DMatrix(X_proc, label=y_lower)
+        dtrain.set_float_info('label_lower_bound', y_lower)
+        dtrain.set_float_info('label_upper_bound', y_upper)
+        self.model = xgb.train(self.params, dtrain, num_boost_round=self.num_boost_round)
+        return self
+
+    def predict(self, X):
+        X_proc = self.scaler.transform(self.imputer.transform(X))
+        return self.model.predict(xgb.DMatrix(X_proc))
+
+
+class XGBRegressorSurvivalModel:
+    """XGBRegressor on log(time) with event weights. Risk = -prediction."""
+    def __init__(self, max_depth=6, learning_rate=0.05, n_estimators=300,
+                 subsample=0.8, colsample_bytree=0.8, min_child_weight=3):
+        self.model = xgb.XGBRegressor(
+            objective='reg:squarederror',
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            subsample=subsample,
+            colsample_bytree=colsample_bytree,
+            min_child_weight=min_child_weight,
+            random_state=RANDOM_STATE,
+            n_jobs=-1,
+        )
+        self.imputer = None
+        self.scaler = None
+
+    def fit(self, X, y):
+        self.imputer = SimpleImputer(strategy='median')
+        self.scaler = StandardScaler()
+        X_proc = self.scaler.fit_transform(self.imputer.fit_transform(X))
+        event = y[y.dtype.names[0]]
+        time_ = y[y.dtype.names[1]]
+        target = np.log1p(time_.astype(float))
+        weight = event.astype(float)
+        self.model.fit(X_proc, target, sample_weight=weight)
+        return self
+
+    def predict(self, X):
+        X_proc = self.scaler.transform(self.imputer.transform(X))
+        return -self.model.predict(X_proc)
+
+
+class DeathEnsemble:
+    """3-model ensemble: RSF + XGB Cox + XGBRegressor."""
+    def __init__(self, weights=None):
+        self.weights = weights or {'rsf': 0.4, 'xgb_cox': 0.3, 'xgb_reg': 0.3}
+        self.rsf = RSFModel(n_estimators=400, min_samples_leaf=20)
+        self.xgb_cox = XGBCoxModel(max_depth=5, learning_rate=0.05, num_boost_round=150)
+        self.xgb_reg = XGBRegressorSurvivalModel(max_depth=6, learning_rate=0.05, n_estimators=300)
+
+    def fit(self, X, y):
+        self.rsf.fit(X, y)
+        self.xgb_cox.fit(X, y)
+        self.xgb_reg.fit(X, y)
+        return self
+
+    def predict(self, X):
+        p_rsf = self.rsf.predict(X)
+        p_cox = self.xgb_cox.predict(X)
+        p_reg = self.xgb_reg.predict(X)
+        for p in [p_rsf, p_cox, p_reg]:
+            if np.std(p) > 0:
+                p -= np.mean(p)
+                p /= (np.std(p) + 1e-8)
+        return (self.weights['rsf'] * p_rsf +
+                self.weights['xgb_cox'] * p_cox +
+                self.weights['xgb_reg'] * p_reg)
 
 
 # ---------------------------------------------------------------------------
@@ -303,20 +361,19 @@ def main():
     # AGENT EDIT ZONE
     # -----------------------------------------------------------------------
 
-    # Hepatic: use top features by univariate C-index ranking, then RSF
+    # Hepatic: top-80 univariate features + RSF
     ranked_hep = rank_features(X_hep, y_hep, common_cols)
-    top_features_hep = ranked_hep.head(60)['feature'].tolist()
+    top_features_hep = ranked_hep.head(80)['feature'].tolist()
     X_hep_sel = X_hep[top_features_hep]
     X_test_hep_sel = X_test_hep[top_features_hep]
 
-    oof_hep = cross_validate(X_hep_sel, y_hep, RSFModel, n_folds=N_FOLDS, n_estimators=300, min_samples_leaf=20)
-    final_hep = RSFModel(n_estimators=500, min_samples_leaf=20).fit(X_hep_sel, y_hep)
+    oof_hep = cross_validate(X_hep_sel, y_hep, RSFModel, n_folds=N_FOLDS, n_estimators=400, min_samples_leaf=20)
+    final_hep = RSFModel(n_estimators=600, min_samples_leaf=20).fit(X_hep_sel, y_hep)
     pred_hep = final_hep.predict(X_test_hep_sel)
 
-    # Death: pure XGBoost (the Gemini v2 winning approach)
-    oof_death = cross_validate(X_death, y_death, XGBModel, n_folds=N_FOLDS,
-                               max_depth=6, learning_rate=0.05, num_boost_round=200)
-    final_death = XGBModel(max_depth=6, learning_rate=0.05, num_boost_round=200).fit(X_death, y_death)
+    # Death: 3-model ensemble
+    oof_death = cross_validate(X_death, y_death, DeathEnsemble, n_folds=N_FOLDS)
+    final_death = DeathEnsemble().fit(X_death, y_death)
     pred_death = final_death.predict(X_test_death)
 
     # -----------------------------------------------------------------------
