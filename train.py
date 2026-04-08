@@ -263,7 +263,7 @@ class HepaticEnsemble:
     def __init__(self, rsf_weight=0.6):
         self.rsf_weight = rsf_weight
         self.xgb_weight = 1.0 - rsf_weight
-        self.rsf = RSFModel(n_estimators=300, min_samples_leaf=20)
+        self.rsf = RSFModel(n_estimators=300, min_samples_leaf=15)
         self.xgb_cox = XGBCoxModel(max_depth=5, learning_rate=0.05, num_boost_round=150)
 
     def fit(self, X, y):
